@@ -1,12 +1,14 @@
-import discord
 from discord.ext import commands, tasks
+import discord
 from itertools import cycle
 import os
 import asyncio
+from dotenv import load_dotenv
 
+load_dotenv()
+token = os.getenv('TOKEN')
 
 client = commands.Bot(command_prefix = '.', intents=discord.Intents.all())
-
 client_status = cycle(['BIP', 'BOP', 'BUP'])
 
 @tasks.loop(seconds=10)
@@ -27,6 +29,6 @@ async def load():
 async def main():
     async with client:
         await load()
-        await client.start("MTEwODM5ODA2NzIzMDcyMDExMg.GmhHNi.m3lJio63F5V35GQbmlA8BPQBmLr94SVFjZ4yhk")
+        await client.start(token)
 
 asyncio.run(main())
