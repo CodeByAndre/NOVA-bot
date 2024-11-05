@@ -15,7 +15,7 @@ class Reboot(commands.Cog):
         await ctx.message.delete()
 
         with open("reboot_flag.txt", "w") as f:
-            f.write(str(confirmation_msg.id))
+            f.write(f"{ctx.channel.id}:{confirmation_msg.id}")
         
         await self.client.close()
         time.sleep(0.2)

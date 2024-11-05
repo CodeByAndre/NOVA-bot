@@ -28,23 +28,23 @@ async def on_ready():
     change_status.start()
 
     if os.path.exists("reboot_flag.txt"):
-        channel = client.get_channel(1303400665493667863)
+        with open("reboot_flag.txt", "r") as f:
+            content = f.read().strip()
+            channel_id, message_id = map(int, content.split(":"))
+
+        channel = client.get_channel(channel_id)
 
         if channel:
-            # Get the message ID of the "Rebooting..." message from the file
-            with open("reboot_flag.txt", "r") as f:
-                rebooting_msg_id = f.read().strip()
-
             try:
-                # Fetch and delete the "Rebooting..." message
-                rebooting_msg = await channel.fetch_message(int(rebooting_msg_id))
+                rebooting_msg = await channel.fetch_message(message_id)
                 await rebooting_msg.delete()
             except Exception as e:
                 print(f"Could not delete 'Rebooting...' message: {e}")
 
-            # Send the "Rebooted successfully" message and delete after 5 seconds
             rebooted_message = await channel.send("Rebooted successfully.")
             await rebooted_message.delete(delay=5)
+
+        os.remove("reboot_flag.txt")
 
 @client.event
 async def on_guild_join(guild):
