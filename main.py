@@ -1,9 +1,11 @@
 from discord.ext import commands, tasks
 import discord
+from discord import File
 from itertools import cycle
 import os
 import asyncio
 import json
+from easy_pil import Editor, load_image_async, Font
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -21,6 +23,35 @@ client_status = cycle(['BIP', 'BOP', 'BUP'])
 @tasks.loop(seconds=10)
 async def change_status():
     await client.change_presence(activity=discord.Game(next(client_status)))
+
+@client.event
+async def on_member_join(member):
+    channel = member.guild.system_channel
+    if channel is None:
+        print("System channel is not set.")
+        return
+    try:
+        background = Editor("pic2.jpg")
+        
+        profile_image = await load_image_async(str(member.avatar.url))
+        profile = Editor(profile_image).resize((150, 150)).circle_image()
+
+        poppins = Font.poppins(size=50, variant="bold")
+        poppins_small = Font.poppins(size=20, variant="light")
+
+        background.paste(profile, (325, 90))
+        background.ellipse((325, 90), 150, 150, outline="white", stroke_width=5)
+
+        background.text((400, 260), f"WELCOME TO {member.guild.name}", color="white", font=poppins, align="center")
+        background.text((400, 325), f"{member.name}#{member.discriminator}", color="white", font=poppins_small, align="center")
+
+        file = File(fp=background.image_bytes, filename="welcome.jpg")
+
+        await channel.send(f"Hello {member.mention}! Welcome to **{member.guild.name}**. For more information, go to #rules.")
+        await channel.send(file=file)
+        
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 @client.event
 async def on_ready():

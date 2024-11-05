@@ -26,11 +26,12 @@ class Cmd(commands.Cog):
                 "`Prefix`\n"
                 "`Reboot`\n"
                 "`Avatar`\n"
+                "`Cmd`\n"
                 "Status: Available"
             ),
             inline=True
         )
-        embed.set_footer(text="Bot Prefix is customizable, use -prefix <new_prefix>")
+        embed.set_footer(text="Bot Prefix is customizable, use /prefix <new_prefix>")
 
         await ctx.send(embed=embed)
 
