@@ -6,9 +6,8 @@ class MuteChannel(commands.Cog):
         self.client = client
 
     @commands.command()
-    @commands.has_permissions(manage_channels=True)  # Ensure the user has permissions to manage the channel
+    @commands.has_permissions(manage_channels=True)
     async def lock(self, ctx):
-        # Get the current channel where the command was executed
         channel = ctx.channel
 
         

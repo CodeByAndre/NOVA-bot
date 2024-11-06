@@ -16,7 +16,7 @@ def get_prefix(client, message):
         prefixes = json.load(f)
         
     return prefixes[str(message.guild.id)]
-
+ 
 client = commands.Bot(command_prefix = get_prefix, intents=discord.Intents.all())
 client_status = cycle(['BIP', 'BOP', 'BUP'])
 
@@ -42,12 +42,12 @@ async def on_member_join(member):
         background.paste(profile, (325, 90))
         background.ellipse((325, 90), 150, 150, outline="white", stroke_width=5)
 
-        background.text((400, 260), f"WELCOME TO {member.guild.name}", color="white", font=poppins, align="center")
+        background.text((400, 260), f"BEM-VIDO AO {member.guild.name}", color="white", font=poppins, align="center")
         background.text((400, 325), f"{member.name}#{member.discriminator}", color="white", font=poppins_small, align="center")
 
         file = File(fp=background.image_bytes, filename="welcome.jpg")
 
-        await channel.send(f"Hello {member.mention}! Welcome to **{member.guild.name}**. For more information, go to #rules.")
+        await channel.send(f"OLÁ! {member.mention}! BEM-VINDO ao **{member.guild.name}**. Para mais informações vai a #rules.")
         await channel.send(file=file)
         
     except Exception as e:
