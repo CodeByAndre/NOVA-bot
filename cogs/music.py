@@ -1,67 +1,185 @@
 import discord
 from discord.ext import commands
-import youtube_dl
-import os
+import yt_dlp as ytdl
+from discord import FFmpegPCMAudio
+import asyncio
 
-# Configurações do youtube_dl
-ytdl_opts = {
-    'format': 'bestaudio',
-    'noplaylist': 'True'
+ffmpeg_opts = {
+    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+    'options': '-vn -acodec pcm_s16le -ar 48000 -ac 2'
 }
-ytdl = youtube_dl.YoutubeDL(ytdl_opts)
+
+YDL_OPTIONS = {
+    'format': 'bestaudio/best',
+    'extractaudio': True,
+    'noplaylist': True,
+    'keepvideo': False,
+    'postprocessors': []
+}
 
 class Music(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+    def __init__(self, client):
+        self.client = client
+        self.queue = []
+        self.is_playing = False
+        self.current_ctx = None
+        self.now_playing_message = None  # To store the current embed message
 
-    @commands.command()
-    async def join(self, ctx):
-        """Entra no canal de voz do usuário."""
-        if ctx.author.voice:  # Verifica se o usuário está em um canal de voz
-            channel = ctx.author.voice.channel
-            try:
-                await channel.connect()
-                await ctx.send(f"Entrei no canal de voz {channel.name}!")
-            except Exception as e:
-                await ctx.send(f"Erro ao tentar entrar no canal: {e}")
+    async def play_song(self, ctx, url):
+        search_msg = await ctx.send("Buscando a música, aguarde...")
+
+        try:
+            with ytdl.YoutubeDL(YDL_OPTIONS) as ydl:
+                info = ydl.extract_info(url, download=False)
+                audio_url = None
+                for format in info['formats']:
+                    if format.get('acodec') != 'none':
+                        audio_url = format['url']
+                        break
+
+                if not audio_url:
+                    await ctx.send("Não foi possível encontrar um stream de áudio.")
+                    return
+
+                audio_source = FFmpegPCMAudio(audio_url, **ffmpeg_opts)
+                ctx.voice_client.play(audio_source, after=self.after_play)
+
+                self.current_ctx = ctx
+
+                # Delete the search message after song starts
+                await search_msg.delete()
+
+                # Fetch the banner/thumbnail image URL
+                thumbnail_url = info.get('thumbnail', None)
+
+                # Send or edit the "Now Playing" embed
+                embed = discord.Embed(title="Now Playing", description=info['title'], color=discord.Color.blue())
+                embed.add_field(name="Duração", value=info['duration'], inline=True)
+                embed.add_field(name="URL", value=f"[Clique aqui]({url})", inline=True)
+
+                # Add thumbnail (banner)
+                if thumbnail_url:
+                    embed.set_thumbnail(url=thumbnail_url)
+
+                if self.now_playing_message:
+                    await self.now_playing_message.edit(embed=embed)
+                else:
+                    self.now_playing_message = await ctx.send(embed=embed)
+
+        except Exception as e:
+            await ctx.send(f"Erro ao tentar reproduzir a música: {str(e)}")
+            await ctx.voice_client.disconnect()
+
+    def after_play(self, e):
+        if self.current_ctx:
+            asyncio.run_coroutine_threadsafe(self.handle_song_end(self.current_ctx), self.client.loop)
+
+    async def handle_song_end(self, ctx):
+        if len(self.queue) > 0:
+            next_song = self.queue.pop(0)
+            await self.play_song(ctx, next_song)
         else:
-            await ctx.send("Você precisa estar em um canal de voz para me chamar!")
+            await ctx.voice_client.disconnect()
+            self.is_playing = False
+            await ctx.send("A fila de músicas acabou. Desconectando...")
 
     @commands.command()
     async def leave(self, ctx):
-        """Sai do canal de voz."""
-        if ctx.voice_client:  # Verifica se o bot está em um canal de voz
+        """Disconnect from the voice channel."""
+        if ctx.voice_client:
             await ctx.voice_client.disconnect()
-            await ctx.send("Saí do canal de voz.")
+            await ctx.send("Desconectado do canal de voz.")
         else:
-            await ctx.send("Não estou em um canal de voz!")
+            await ctx.send("O bot não está em nenhum canal de voz.")
+        await ctx.message.delete()
 
     @commands.command()
     async def play(self, ctx, url: str):
-        """Toca uma música a partir de uma URL do YouTube."""
-        try:
-            # Verifica se o bot está conectado ao canal de voz
-            if not ctx.voice_client:
-                if ctx.author.voice:  # Verifica se o usuário está em um canal de voz
-                    channel = ctx.author.voice.channel
-                    await channel.connect()
-                else:
-                    await ctx.send("Você precisa estar em um canal de voz para eu entrar.")
-                    return
+        """Play a song."""
+        if not ctx.author.voice:
+            await ctx.send("Você precisa estar em um canal de voz!")
+            return
 
-            await ctx.send("Buscando a música, aguarde...")
+        voice_channel = ctx.author.voice.channel
 
-            # Extrai informações de áudio do vídeo
-            info = ytdl.extract_info(url, download=False)
-            url2 = info['formats'][0]['url']
-            source = await discord.FFmpegOpusAudio.from_probe(url2)
+        if not ctx.voice_client:
+            await voice_channel.connect()
 
-            # Toca a música
-            ctx.voice_client.play(source)
-            await ctx.send(f"Tocando agora: **{info['title']}**")
+        if not self.is_playing:
+            self.is_playing = True
+            await self.play_song(ctx, url)
 
-        except Exception as e:
-            await ctx.send(f"Erro ao tentar reproduzir a música: {e}")
+            await ctx.message.delete()
+        else:
+            self.queue.append(url)
+            embed = discord.Embed(title="Música adicionada à fila", description=f"[Clique aqui para ouvir]({url})", color=discord.Color.purple())
+            await ctx.send(embed=embed)
 
-async def setup(bot):
-    await bot.add_cog(Music(bot))
+            await ctx.message.delete()
+
+    @commands.command()
+    async def pause(self, ctx):
+        """Pause the current song."""
+        if ctx.voice_client.is_playing():
+            ctx.voice_client.pause()
+            await ctx.send("Música pausada.", delete_after=5)
+        else:
+            await ctx.send("Nenhuma música está sendo tocada.", delete_after=5)
+        await ctx.message.delete()
+
+    @commands.command()
+    async def resume(self, ctx):
+        """Resume the paused song."""
+        if ctx.voice_client.is_paused():
+            ctx.voice_client.resume()
+            await ctx.send("Música retomada.", delete_after=5)
+        else:
+            await ctx.send("A música não foi pausada.")
+        await ctx.message.delete()
+
+    @commands.command()
+    async def stop(self, ctx):
+        """Stop the current song."""
+        if ctx.voice_client:
+            ctx.voice_client.stop()
+            await ctx.voice_client.disconnect()
+            await ctx.send("Música parada e desconectado do canal de voz.", delete_after=5)
+        else:
+            await ctx.send("O bot não está tocando música.", delete_after=5)
+        await ctx.message.delete()
+
+    @commands.command()
+    async def add(self, ctx, url: str):
+        """Add a song to the queue."""
+        self.queue.append(url)
+        embed = discord.Embed(title="Música adicionada à fila", description=f"[Clique aqui para ouvir]({url})", color=discord.Color.purple())
+        await ctx.send(embed=embed)
+        await ctx.message.delete()
+
+    @commands.command()
+    async def queue(self, ctx):
+        """Display the current music queue."""
+        if not self.queue:
+            await ctx.send("A fila está vazia.", delete_after=5)
+        else:
+            embed = discord.Embed(title="Fila de músicas", color=discord.Color.green())
+            for i, url in enumerate(self.queue, start=1):
+                with ytdl.YoutubeDL(YDL_OPTIONS) as ydl:
+                    info = ydl.extract_info(url, download=False)
+                    title = info['title']
+                embed.add_field(name=f"{i}. {title}", value=f"[Ouvir aqui]({url})", inline=False)
+            await ctx.send(embed=embed)
+        await ctx.message.delete()
+
+    @commands.command()
+    async def skip(self, ctx):
+        """Skip the current song."""
+        if ctx.voice_client and ctx.voice_client.is_playing():
+            ctx.voice_client.stop()
+            await ctx.send("Música pulada.", delete_after=5)
+        else:
+            await ctx.send("Não há música tocando no momento.", delete_after=5)
+        await ctx.message.delete()
+
+async def setup(client):
+    await client.add_cog(Music(client))
