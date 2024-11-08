@@ -23,7 +23,7 @@ class Music(commands.Cog):
         self.queue = []
         self.is_playing = False
         self.current_ctx = None
-        self.now_playing_message = None  # To store the current embed message
+        self.now_playing_message = None
 
     async def play_song(self, ctx, url):
         search_msg = await ctx.send("Buscando a música, aguarde...")
@@ -46,18 +46,14 @@ class Music(commands.Cog):
 
                 self.current_ctx = ctx
 
-                # Delete the search message after song starts
                 await search_msg.delete()
 
-                # Fetch the banner/thumbnail image URL
                 thumbnail_url = info.get('thumbnail', None)
 
-                # Send or edit the "Now Playing" embed
                 embed = discord.Embed(title="Now Playing", description=info['title'], color=discord.Color.blue())
                 embed.add_field(name="Duração", value=info['duration'], inline=True)
                 embed.add_field(name="URL", value=f"[Clique aqui]({url})", inline=True)
 
-                # Add thumbnail (banner)
                 if thumbnail_url:
                     embed.set_thumbnail(url=thumbnail_url)
 
