@@ -38,7 +38,7 @@ class Music(commands.Cog):
                         break
 
                 if not audio_url:
-                    await ctx.send("Não foi possível encontrar um stream de áudio.")
+                    await ctx.send("Não foi possível encontrar um stream de áudio.", delete_after=3)
                     return
 
                 audio_source = FFmpegPCMAudio(audio_url, **ffmpeg_opts)
@@ -67,7 +67,7 @@ class Music(commands.Cog):
                     self.now_playing_message = await ctx.send(embed=embed)
 
         except Exception as e:
-            await ctx.send(f"Erro ao tentar reproduzir a música: {str(e)}")
+            await ctx.send(f"Erro ao tentar reproduzir a música: {str(e)}", delete_after=3)
             await ctx.voice_client.disconnect()
 
     def after_play(self, e):
@@ -81,7 +81,7 @@ class Music(commands.Cog):
         else:
             await ctx.voice_client.disconnect()
             self.is_playing = False
-            await ctx.send("A fila de músicas acabou. Desconectando...")
+            await ctx.send("A fila de músicas acabou. Desconectando...", delete_after=3)
 
     @commands.command()
     async def leave(self, ctx):
@@ -97,7 +97,7 @@ class Music(commands.Cog):
     async def play(self, ctx, url: str):
         """Play a song."""
         if not ctx.author.voice:
-            await ctx.send("Você precisa estar em um canal de voz!")
+            await ctx.send("Você precisa estar em um canal de voz!", delete_after=5)
             return
 
         voice_channel = ctx.author.voice.channel
@@ -122,9 +122,9 @@ class Music(commands.Cog):
         """Pause the current song."""
         if ctx.voice_client.is_playing():
             ctx.voice_client.pause()
-            await ctx.send("Música pausada.", delete_after=5)
+            await ctx.send("Música pausada.", delete_after=3)
         else:
-            await ctx.send("Nenhuma música está sendo tocada.", delete_after=5)
+            await ctx.send("Nenhuma música está sendo tocada.", delete_after=3)
         await ctx.message.delete()
 
     @commands.command()
@@ -132,9 +132,9 @@ class Music(commands.Cog):
         """Resume the paused song."""
         if ctx.voice_client.is_paused():
             ctx.voice_client.resume()
-            await ctx.send("Música retomada.", delete_after=5)
+            await ctx.send("Música retomada.", delete_after=3)
         else:
-            await ctx.send("A música não foi pausada.")
+            await ctx.send("A música não foi pausada.", delete_after=4)
         await ctx.message.delete()
 
     @commands.command()
@@ -153,7 +153,7 @@ class Music(commands.Cog):
         """Add a song to the queue."""
         self.queue.append(url)
         embed = discord.Embed(title="Música adicionada à fila", description=f"[Clique aqui para ouvir]({url})", color=discord.Color.purple())
-        await ctx.send(embed=embed)
+        await ctx.send(embed=embed, delete_after=7)
         await ctx.message.delete()
 
     @commands.command()
