@@ -2,6 +2,7 @@ from discord.ext import commands, tasks
 import discord
 from discord import File
 from itertools import cycle
+import json
 import os
 import asyncio
 import json
@@ -14,7 +15,7 @@ token = os.getenv('TOKEN')
 def get_prefix(client, message):
     with open('prefix.json', 'r') as f:
         prefixes = json.load(f)
-        
+    
     return prefixes[str(message.guild.id)]
  
 client = commands.Bot(command_prefix = get_prefix, intents=discord.Intents.all())
