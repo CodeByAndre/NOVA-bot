@@ -4,7 +4,6 @@ import requests
 from dotenv import load_dotenv
 import os
 
-# Carregar variáveis de ambiente do arquivo .env
 load_dotenv()
 
 class FilmesESeries(commands.Cog):
@@ -13,14 +12,12 @@ class FilmesESeries(commands.Cog):
 
     @commands.command()
     async def filme(self, ctx, *, nome):
-        # Obter a chave da API a partir da variável de ambiente
         api_key = os.getenv("TMDB_API_KEY")
         
         if not api_key:
             await ctx.send("Chave de API do TMDb não encontrada. Verifique o arquivo .env.")
             return
 
-        # Buscar informações sobre o filme no TMDb
         search_url = f"https://api.themoviedb.org/3/search/movie?api_key={api_key}&query={nome}"
         response = requests.get(search_url)
 
@@ -31,10 +28,8 @@ class FilmesESeries(commands.Cog):
         data = response.json()
         
         if data["results"]:
-            # Pega o primeiro resultado da busca
             movie_id = data["results"][0]["id"]
 
-            # Obter detalhes sobre o filme
             details_url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={api_key}"
             details_response = requests.get(details_url)
             
@@ -44,17 +39,14 @@ class FilmesESeries(commands.Cog):
 
             details = details_response.json()
 
-            # Criar o Embed
             embed = discord.Embed(title=details["title"], color=discord.Color.blue())
             embed.set_thumbnail(url=f"https://image.tmdb.org/t/p/w500{details['poster_path']}")
 
-            # Adicionando informações ao embed
             embed.add_field(name="Ano", value=details["release_date"].split("-")[0], inline=True)
             embed.add_field(name="Gênero", value=", ".join([genre["name"] for genre in details["genres"]]), inline=True)
             embed.add_field(name="Classificação IMDb", value=details["vote_average"], inline=True)
             embed.add_field(name="Duração", value=f"{details['runtime']} minutos", inline=True)
 
-            # Onde assistir
             watch_url = f"https://api.themoviedb.org/3/movie/{movie_id}/watch/providers?api_key={api_key}"
             watch_response = requests.get(watch_url)
             
@@ -80,14 +72,12 @@ class FilmesESeries(commands.Cog):
 
     @commands.command()
     async def serie(self, ctx, *, nome):
-        # Obter a chave da API a partir da variável de ambiente
         api_key = os.getenv("TMDB_API_KEY")
         
         if not api_key:
             await ctx.send("Chave de API do TMDb não encontrada. Verifique o arquivo .env.")
             return
 
-        # Buscar informações sobre a série no TMDb
         search_url = f"https://api.themoviedb.org/3/search/tv?api_key={api_key}&query={nome}"
         response = requests.get(search_url)
 
@@ -98,10 +88,8 @@ class FilmesESeries(commands.Cog):
         data = response.json()
 
         if data["results"]:
-            # Pega o primeiro resultado da busca
             series_id = data["results"][0]["id"]
 
-            # Obter detalhes sobre a série
             details_url = f"https://api.themoviedb.org/3/tv/{series_id}?api_key={api_key}"
             details_response = requests.get(details_url)
             
@@ -111,17 +99,14 @@ class FilmesESeries(commands.Cog):
 
             details = details_response.json()
 
-            # Criar o Embed
             embed = discord.Embed(title=details["name"], color=discord.Color.green())
             embed.set_thumbnail(url=f"https://image.tmdb.org/t/p/w500{details['poster_path']}")
 
-            # Adicionando informações ao embed
             embed.add_field(name="Ano", value=details["first_air_date"].split("-")[0], inline=True)
             embed.add_field(name="Gênero", value=", ".join([genre["name"] for genre in details["genres"]]), inline=True)
             embed.add_field(name="Classificação IMDb", value=details["vote_average"], inline=True)
             embed.add_field(name="Duração", value=f"{details['episode_run_time'][0]} minutos por episódio", inline=True)
 
-            # Onde assistir
             watch_url = f"https://api.themoviedb.org/3/tv/{series_id}/watch/providers?api_key={api_key}"
             watch_response = requests.get(watch_url)
             
