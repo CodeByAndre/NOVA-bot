@@ -36,13 +36,12 @@ class Help(commands.Cog):
         )
         embed.add_field(
             name=":game_die: | Games",
-            value="`galo`, `colocar`\nStatus: Available",
+            value="`galo`, `colocar` , `futebolada`\nStatus: Available",
             inline=False
         )
         embed.set_footer(text=f"Bot Prefix: {guild_prefix}")
 
         await ctx.send(embed=embed)
-        print("Embed enviado")
 
 async def setup(client):
     await client.add_cog(Help(client))
