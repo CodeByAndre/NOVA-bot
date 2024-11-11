@@ -23,5 +23,7 @@ class Futebolada(commands.Cog):
         embed.add_field(name="EQUIPA 1", value="\n".join(equipe_1), inline=True)
         embed.add_field(name="EQUIPA 2", value="\n".join(equipe_2), inline=True)
 
+        await ctx.send(embed=embed)
+
 async def setup(client):
     await client.add_cog(Futebolada(client))
