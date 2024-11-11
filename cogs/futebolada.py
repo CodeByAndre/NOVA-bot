@@ -9,7 +9,7 @@ class Futebolada(commands.Cog):
     @commands.command()
     async def futebolada(self, ctx, *args):
         if len(args) < 4 or len(args) % 2 != 0:
-            await ctx.send("Por favor, forneça nomes e habilidades (exemplo: `/futebolada joao bom martim mao antonio medio`).")
+            await ctx.send("Por favor, forneça nomes e habilidades (exemplo: `bom medio mao`).")
             return
 
         players = {}
@@ -40,10 +40,6 @@ class Futebolada(commands.Cog):
         await ctx.send(embed=embed)
 
     def balance_teams(self, players):
-        """
-        Balances teams based on skill levels.
-        """
-
         good_players = [p for p, skill in players.items() if skill == "bom"]
         medium_players = [p for p, skill in players.items() if skill == "medio"]
         bad_players = [p for p, skill in players.items() if skill == "mao"]
@@ -64,9 +60,6 @@ class Futebolada(commands.Cog):
         return {"team_1": team_1, "team_2": team_2}
 
     def randomize_teams_fully(self, teams, players):
-        """
-        Fully randomizes players with the same skill level between teams.
-        """
         skill_groups = {"bom": [], "medio": [], "mao": []}
 
         for player in teams["team_1"]:
