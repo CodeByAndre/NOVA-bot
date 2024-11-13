@@ -19,20 +19,29 @@ class Futebolada(commands.Cog):
             json.dump(players, f, indent=4)
 
     @commands.command()
-    async def player(self, ctx, name: str, skill: str):
-        skill = skill.lower()
-        if skill not in ["bom", "medio", "mao"]:
-            await ctx.send("Habilidade inválida. Use 'bom', 'medio' ou 'mao'.")
+    async def player(self, ctx, *args):
+        if len(args) % 2 != 0:
+            await ctx.send("Por favor, forneça pares de nome e habilidade (exemplo: `Lukas bom Pedro medio`).")
             return
-        
+
         guild_id = str(ctx.guild.id)
         players = self.load_players()
         if guild_id not in players:
             players[guild_id] = {}
-        
-        players[guild_id][name] = skill
+
+        added_players = []
+        for i in range(0, len(args), 2):
+            name = args[i]
+            skill = args[i + 1].lower()
+            if skill not in ["bom", "medio", "mao"]:
+                await ctx.send(f"Habilidade inválida para {name}: {skill}. Use 'bom', 'medio', ou 'mao'.")
+                return
+            players[guild_id][name] = skill
+            added_players.append(f"{name} ({skill})")
+
         self.save_players(players)
-        await ctx.send(f"{name} adicionado com habilidade {skill}.")
+        await ctx.send(f"Jogadores adicionados: {', '.join(added_players)}")
+
 
     @commands.command()
     async def rplayer(self, ctx, name: str):
@@ -44,6 +53,37 @@ class Futebolada(commands.Cog):
             await ctx.send(f"{name} removido da lista de jogadores.")
         else:
             await ctx.send(f"{name} não encontrado na lista de jogadores.")
+
+    @commands.command()
+    async def players(self, ctx):
+        guild_id = str(ctx.guild.id)
+        players = self.load_players().get(guild_id, {})
+
+        if not players:
+            await ctx.send("❌ Não há jogadores registrados para este servidor.")
+            return
+
+        skill_emojis = {
+            "bom": "🌟 Bom",
+            "medio": "⚖️ Médio",
+            "mao": "👎 Mau"
+        }
+
+        embed = discord.Embed(
+            title="🏆 Lista de Jogadores",
+            description="Aqui estão os jogadores registrados para este servidor.",
+            color=discord.Color.blue()
+        )
+
+        for name, skill in players.items():
+            embed.add_field(name=f"👤 {name}", value=skill_emojis.get(skill, skill), inline=True)
+
+        embed.set_footer(text=f"Total de jogadores: {len(players)}")
+        embed.set_author(name=ctx.guild.name, icon_url=ctx.guild.icon.url if ctx.guild.icon else None)
+        embed.timestamp = ctx.message.created_at
+
+        await ctx.send(embed=embed)
+
 
     @commands.command()
     async def futebolada(self, ctx):
