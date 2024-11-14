@@ -58,13 +58,6 @@ async def on_ready():
     print('Online and ready!')
     change_status.start()
 
-    try:
-        # Sincroniza os comandos de barra com o Discord
-        await client.tree.sync()
-        print("Slash commands sincronizados.")
-    except Exception as e:
-        print(f"Erro ao sincronizar comandos: {e}")
-
     if os.path.exists("reboot_flag.txt"):
         with open("reboot_flag.txt", "r") as f:
             content = f.read().strip()
@@ -104,7 +97,6 @@ async def on_guild_remove(guild):
     with open('prefix.json', 'w') as f:
         json.dump(prefixes, f, indent=4)
 
-# Carrega todos os cogs, incluindo o de Help
 async def load():
     for filename in os.listdir('./cogs'):
         if filename.endswith('.py'):
