@@ -1,6 +1,6 @@
 from discord.ext import commands, tasks
 import discord
-from discord import File, app_commands
+from discord import File
 from itertools import cycle
 import json
 import os
@@ -58,12 +58,6 @@ async def on_ready():
     print('Online and ready!')
     change_status.start()
 
-    try:
-        synced = await client.tree.sync()  # Sincroniza os slash commands com o Discord
-        print(f"Slash commands sincronizados: {len(synced)} comandos")
-    except Exception as e:
-        print(f"Erro ao sincronizar comandos: {e}")
-
     if os.path.exists("reboot_flag.txt"):
         with open("reboot_flag.txt", "r") as f:
             content = f.read().strip()
@@ -102,11 +96,6 @@ async def on_guild_remove(guild):
 
     with open('prefix.json', 'w') as f:
         json.dump(prefixes, f, indent=4)
-
-# Slash command para Active Developer Badge
-@client.tree.command(name="active-dev-badge", description="Claim your Active Developer Badge")
-async def active_dev_badge(interaction: discord.Interaction):
-    await interaction.response.send_message("Você ativou o comando para obter a Active Developer Badge! Verifique o portal de desenvolvedores do Discord.")
 
 async def load():
     for filename in os.listdir('./cogs'):
