@@ -6,21 +6,16 @@ import json
 class Help(commands.Cog):
     def __init__(self, client):
         self.client = client
-        client.remove_command("help")
-
-    @commands.command()
-    async def help(self, ctx):
-        await self.send_help(ctx)
 
     @app_commands.command(name="help", description="Get a list of all available commands.")
     async def slash_help(self, interaction: discord.Interaction):
         await self.send_help(interaction)
 
-    async def send_help(self, target):
+    async def send_help(self, interaction: discord.Interaction):
         try:
             with open("prefix.json", "r") as f:
                 data = json.load(f)
-                guild_prefix = data.get(str(target.guild.id), "!")
+                guild_prefix = data.get(str(interaction.guild.id), "!")
         except (FileNotFoundError, json.JSONDecodeError):
             guild_prefix = "!"
 
@@ -57,10 +52,10 @@ class Help(commands.Cog):
 
         embed.set_footer(text=f"Bot Prefix: {guild_prefix}")
 
-        if isinstance(target, discord.Interaction):
-            await target.response.send_message(embed=embed)
-        else:
-            await target.send(embed=embed)
+        await interaction.response.send_message(embed=embed)
+
+    async def cog_load(self):
+        self.client.tree.add_command(self.slash_help)
 
 async def setup(client):
     await client.add_cog(Help(client))
