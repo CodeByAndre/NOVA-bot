@@ -1,0 +1,8 @@
+discord.py
+requests
+python-dotenv
+openai
+yt-dlp[default] --pre
+deep-translator
+easy-pil
+pynacl

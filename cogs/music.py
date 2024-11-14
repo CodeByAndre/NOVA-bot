@@ -27,14 +27,13 @@ class Music(commands.Cog):
 
     async def fetch_audio_url(self, query):
         try:
-            # Check if the query is a URL
             is_url = query.startswith("http")
             search_query = query if is_url else f"ytsearch:{query}"
 
             with ytdl.YoutubeDL(YDL_OPTIONS) as ydl:
                 info = ydl.extract_info(search_query, download=False)
                 if not is_url:
-                    info = info['entries'][0]  # Get the first result from ytsearch
+                    info = info['entries'][0]
                 audio_url = next((format['url'] for format in info['formats'] if format.get('acodec') != 'none'), None)
                 
                 if audio_url:
