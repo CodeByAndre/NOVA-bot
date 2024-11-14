@@ -33,8 +33,8 @@ class Futebolada(commands.Cog):
         for i in range(0, len(args), 2):
             name = args[i]
             skill = args[i + 1].lower()
-            if skill not in ["bom", "medio", "mao"]:
-                await ctx.send(f"Habilidade inválida para {name}: {skill}. Use 'bom', 'medio', ou 'mao'.")
+            if skill not in ["bom", "medio", "mau"]:
+                await ctx.send(f"Habilidade inválida para {name}: {skill}. Use 'bom', 'medio', ou 'mau'.")
                 return
             players[guild_id][name] = skill
             added_players.append(f"{name} ({skill})")
@@ -66,7 +66,7 @@ class Futebolada(commands.Cog):
         skill_emojis = {
             "bom": "🌟 Bom",
             "medio": "⚖️ Médio",
-            "mao": "👎 Mau"
+            "mau": "👎 Mau"
         }
 
         embed = discord.Embed(
@@ -114,7 +114,7 @@ class Futebolada(commands.Cog):
     def balance_teams(self, players):
         good_players = [p for p, skill in players.items() if skill == "bom"]
         medium_players = [p for p, skill in players.items() if skill == "medio"]
-        bad_players = [p for p, skill in players.items() if skill == "mao"]
+        bad_players = [p for p, skill in players.items() if skill == "mau"]
 
         random.shuffle(good_players)
         random.shuffle(medium_players)
@@ -136,7 +136,7 @@ class Futebolada(commands.Cog):
         return {"team_1": team_1, "team_2": team_2}
 
     def randomize_teams_fully(self, teams, players):
-        skill_groups = {"bom": [], "medio": [], "mao": []}
+        skill_groups = {"bom": [], "medio": [], "mau": []}
 
         for player in teams["team_1"]:
             skill_groups[players[player]].append(player)
