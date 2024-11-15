@@ -122,16 +122,23 @@ class Futebolada(commands.Cog):
 
         team_1, team_2 = [], []
 
-        def distribute_players_randomly(team_1, team_2, players):
+        def distribute_players_evenly(team_1, team_2, players):
             for i, player in enumerate(players):
-                if i % 2 == 0:
+                if len(team_1) < len(team_2):
                     team_1.append(player)
                 else:
                     team_2.append(player)
 
-        distribute_players_randomly(team_1, team_2, good_players)
-        distribute_players_randomly(team_1, team_2, medium_players)
-        distribute_players_randomly(team_1, team_2, bad_players)
+        distribute_players_evenly(team_1, team_2, good_players)
+        distribute_players_evenly(team_1, team_2, medium_players)
+        distribute_players_evenly(team_1, team_2, bad_players)
+
+        total_players = len(players)
+        if total_players % 2 == 0:
+            while len(team_1) > len(team_2):
+                team_2.append(team_1.pop())
+            while len(team_2) > len(team_1):
+                team_1.append(team_2.pop())
 
         return {"team_1": team_1, "team_2": team_2}
 
@@ -150,6 +157,13 @@ class Futebolada(commands.Cog):
             teams["team_2"] = [p for p in teams["team_2"] if players[p] != skill]
             teams["team_1"].extend(grouped_players[:half])
             teams["team_2"].extend(grouped_players[half:])
+
+        total_players = len(teams["team_1"]) + len(teams["team_2"])
+        if total_players % 2 == 0:
+            while len(teams["team_1"]) > len(teams["team_2"]):
+                teams["team_2"].append(teams["team_1"].pop())
+            while len(teams["team_2"]) > len(teams["team_1"]):
+                teams["team_1"].append(teams["team_2"].pop())
 
         random.shuffle(teams["team_1"])
         random.shuffle(teams["team_2"])
