@@ -25,6 +25,22 @@ class Music(commands.Cog):
         self.current_ctx = None
         self.now_playing_message = None
 
+    async def clear_state(self):
+        self.queue.clear()
+        self.is_playing = False
+        self.current_ctx = None
+        self.now_playing_message = None
+
+    @commands.Cog.listener()
+    async def on_voice_state_update(self, member, before, after):
+        if member == self.client.user and before.channel is not None and after.channel is None:
+            if self.current_ctx:
+                try:
+                    await self.current_ctx.send("O bot foi desconectado do canal.", delete_after=5)
+                except Exception as e:
+                    print(f"Error sending disconnect message: {e}")
+            await self.clear_state()
+
     async def fetch_audio_url(self, query):
         try:
             is_url = query.startswith("http")
@@ -43,7 +59,7 @@ class Music(commands.Cog):
             return None, None
 
     async def play_song(self, ctx, query):
-        search_msg = await ctx.send("Buscando a música, aguarde...")
+        search_msg = await ctx.send("A procura da música, aguarde...")
         audio_url, info = await self.fetch_audio_url(query)
 
         if audio_url and info:
@@ -53,7 +69,6 @@ class Music(commands.Cog):
             self.current_ctx = ctx
             await search_msg.delete()
 
-            # Create Now Playing embed
             embed = discord.Embed(
                 title="Now Playing", 
                 description=info['title'], 
@@ -89,7 +104,7 @@ class Music(commands.Cog):
     async def play(self, ctx, *, query: str):
         """Play a song using a URL or search query."""
         if not ctx.author.voice:
-            await ctx.send("Você precisa estar em um canal de voz!", delete_after=5)
+            await ctx.send("Precisas de estar em um canal de voz!", delete_after=5)
             return
 
         voice_channel = ctx.author.voice.channel
@@ -113,7 +128,6 @@ class Music(commands.Cog):
 
     @commands.command()
     async def add(self, ctx, *, query: str):
-        """Add a song to the queue using a URL or search query."""
         audio_url, info = await self.fetch_audio_url(query)
         if audio_url and info:
             self.queue.append(query)
@@ -129,7 +143,6 @@ class Music(commands.Cog):
 
     @commands.command()
     async def queue(self, ctx):
-        """Display the current music queue."""
         if not self.queue:
             await ctx.send("A fila está vazia.", delete_after=5)
         else:
@@ -142,33 +155,41 @@ class Music(commands.Cog):
 
     @commands.command()
     async def skip(self, ctx):
-        """Skip the current song."""
         if ctx.voice_client and ctx.voice_client.is_playing():
             ctx.voice_client.stop()
             await ctx.send("Música pulada.", delete_after=5)
         else:
-            await ctx.send("Não há música tocando no momento.", delete_after=5)
+            await ctx.send("Não há música a tocar no momento.", delete_after=5)
         await ctx.message.delete()
 
     @commands.command()
     async def stop(self, ctx):
-        """Stop the current song and disconnect from the voice channel."""
         if ctx.voice_client:
             ctx.voice_client.stop()
             await ctx.voice_client.disconnect()
             await ctx.send("Música parada e desconectado do canal de voz.", delete_after=5)
         else:
-            await ctx.send("O bot não está tocando música.", delete_after=5)
+            await ctx.send("O bot não está a tocar música.", delete_after=5)
         await ctx.message.delete()
 
     @commands.command()
-    async def leave(self, ctx):
-        """Disconnect from the voice channel."""
-        if ctx.voice_client:
-            await ctx.voice_client.disconnect()
-            await ctx.send("Desconectado do canal de voz.")
+    async def pause(self, ctx):
+        """Pausa a música atual."""
+        if ctx.voice_client and ctx.voice_client.is_playing():
+            ctx.voice_client.pause()
+            await ctx.send("A música foi pausada.", delete_after=5)
         else:
-            await ctx.send("O bot não está em nenhum canal de voz.")
+            await ctx.send("Não há música a tocar no momento para pausar.", delete_after=5)
+        await ctx.message.delete()
+
+    @commands.command()
+    async def resume(self, ctx):
+        """Resume a música pausada."""
+        if ctx.voice_client and ctx.voice_client.is_paused():
+            ctx.voice_client.resume()
+            await ctx.send("A música foi retomada.", delete_after=5)
+        else:
+            await ctx.send("Não há música pausadas no momento.", delete_after=5)
         await ctx.message.delete()
 
 async def setup(client):

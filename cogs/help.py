@@ -32,7 +32,7 @@ class Help(commands.Cog):
 
         embed.add_field(
             name=":musical_note: | Music",
-            value="`play`, `pause`, `resume`, `stop`, `skip`, `queue`, `add`, `leave`\nStatus: Available",
+            value="`play`, `add`, `skip`, `pause`, `resume`, `stop`, `queue`\nStatus: Available",
             inline=False
         )
 

@@ -1,12 +1,28 @@
 {
+    "1303400665493667860": {
+        "teixeira": "medio",
+        "pedro": "medio",
+        "andre": "bom",
+        "caetano": "bom",
+        "diogo": "medio",
+        "kyer": "medio",
+        "fernando": "mau",
+        "docha": "medio"
+    },
     "1041374704621072415": {
         "teixeira": "medio",
         "pedro": "medio",
         "andre": "bom",
         "caetano": "bom",
         "diogo": "medio",
-        "kyer": "mao",
-        "fernando": "mao",
-        "docha" : "medio"
+        "fernando": "mau",
+        "docha": "medio",
+        "marinho": "medio",
+        "tomas": "bom",
+        "mbe": "bom",
+        "nur": "medio",
+        "amir": "mau",
+        "pedrom": "medio",
+        "kyer": "mau"
     }
 }
