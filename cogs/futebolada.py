@@ -42,7 +42,6 @@ class Futebolada(commands.Cog):
         self.save_players(players)
         await ctx.send(f"Jogadores adicionados: {', '.join(added_players)}")
 
-
     @commands.command()
     async def rplayer(self, ctx, name: str):
         guild_id = str(ctx.guild.id)
@@ -84,6 +83,18 @@ class Futebolada(commands.Cog):
 
         await ctx.send(embed=embed)
 
+    @commands.command()
+    async def clearp(self, ctx):
+        """Remove todos os jogadores da lista do servidor atual."""
+        guild_id = str(ctx.guild.id)
+        players = self.load_players()
+
+        if guild_id in players:
+            del players[guild_id]
+            self.save_players(players)
+            await ctx.send("✅ Todos os jogadores foram removidos da lista!")
+        else:
+            await ctx.send("❌ Não há jogadores registrados para este servidor.")
 
     @commands.command()
     async def futebolada(self, ctx):
@@ -95,7 +106,6 @@ class Futebolada(commands.Cog):
             return
 
         balanced_teams = self.balance_teams(players)
-        self.randomize_teams_fully(balanced_teams, players)
 
         embed = discord.Embed(title="Equipas da Futebolada", color=discord.Color.green())
         embed.add_field(
@@ -112,6 +122,7 @@ class Futebolada(commands.Cog):
         await ctx.send(embed=embed)
 
     def balance_teams(self, players):
+        # Divide players by skill levels
         good_players = [p for p, skill in players.items() if skill == "bom"]
         medium_players = [p for p, skill in players.items() if skill == "medio"]
         bad_players = [p for p, skill in players.items() if skill == "mau"]
@@ -122,51 +133,27 @@ class Futebolada(commands.Cog):
 
         team_1, team_2 = [], []
 
-        def distribute_players_evenly(team_1, team_2, players):
-            for i, player in enumerate(players):
-                if len(team_1) < len(team_2):
+        # Helper function to distribute players evenly
+        def distribute_evenly(team_1, team_2, player_list):
+            for i, player in enumerate(player_list):
+                if len(team_1) <= len(team_2):
                     team_1.append(player)
                 else:
                     team_2.append(player)
 
-        distribute_players_evenly(team_1, team_2, good_players)
-        distribute_players_evenly(team_1, team_2, medium_players)
-        distribute_players_evenly(team_1, team_2, bad_players)
+        # Distribute players by skill level
+        distribute_evenly(team_1, team_2, good_players)
+        distribute_evenly(team_1, team_2, medium_players)
+        distribute_evenly(team_1, team_2, bad_players)
 
-        total_players = len(players)
-        if total_players % 2 == 0:
-            while len(team_1) > len(team_2):
+        # Ensure team sizes are balanced
+        while abs(len(team_1) - len(team_2)) > 1:
+            if len(team_1) > len(team_2):
                 team_2.append(team_1.pop())
-            while len(team_2) > len(team_1):
+            else:
                 team_1.append(team_2.pop())
 
         return {"team_1": team_1, "team_2": team_2}
-
-    def randomize_teams_fully(self, teams, players):
-        skill_groups = {"bom": [], "medio": [], "mau": []}
-
-        for player in teams["team_1"]:
-            skill_groups[players[player]].append(player)
-        for player in teams["team_2"]:
-            skill_groups[players[player]].append(player)
-
-        for skill, grouped_players in skill_groups.items():
-            random.shuffle(grouped_players)
-            half = len(grouped_players) // 2
-            teams["team_1"] = [p for p in teams["team_1"] if players[p] != skill]
-            teams["team_2"] = [p for p in teams["team_2"] if players[p] != skill]
-            teams["team_1"].extend(grouped_players[:half])
-            teams["team_2"].extend(grouped_players[half:])
-
-        total_players = len(teams["team_1"]) + len(teams["team_2"])
-        if total_players % 2 == 0:
-            while len(teams["team_1"]) > len(teams["team_2"]):
-                teams["team_2"].append(teams["team_1"].pop())
-            while len(teams["team_2"]) > len(teams["team_1"]):
-                teams["team_1"].append(teams["team_2"].pop())
-
-        random.shuffle(teams["team_1"])
-        random.shuffle(teams["team_2"])
 
 async def setup(client):
     await client.add_cog(Futebolada(client))
