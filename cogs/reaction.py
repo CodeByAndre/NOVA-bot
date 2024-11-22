@@ -4,6 +4,7 @@ from discord.ext import commands
 class ReactionRole(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.reaction_roles = {}
 
     @commands.command(name="react")
     async def react(self, ctx, message_text: str, emoji: str, role: discord.Role):
@@ -18,17 +19,45 @@ class ReactionRole(commands.Cog):
 
         await message.add_reaction(emoji)
 
+        self.reaction_roles[message.id] = (emoji, role)
+
         await ctx.message.delete()
 
-        @self.bot.event
-        async def on_reaction_add(reaction, user):
-            if reaction.message.id == message.id and str(reaction.emoji) == emoji:
-                await user.add_roles(role)
+    @commands.Cog.listener()
+    async def on_reaction_add(self, reaction, user):
+        if user.bot:
+            return
 
-        @self.bot.event
-        async def on_reaction_remove(reaction, user):
-            if reaction.message.id == message.id and str(reaction.emoji) == emoji:
-                await user.remove_roles(role)
+        message_id = reaction.message.id
+        if message_id in self.reaction_roles:
+            emoji, role = self.reaction_roles[message_id]
+            if str(reaction.emoji) == emoji:
+                guild = reaction.message.guild
+                member = guild.get_member(user.id)
+                if member:
+                    await member.add_roles(role)
+                    await reaction.message.channel.send(
+                        f"{user.mention} foi adicionado ao cargo {role.name}.",
+                        delete_after=5
+                    )
+
+    @commands.Cog.listener()
+    async def on_reaction_remove(self, reaction, user):
+        if user.bot:
+            return
+
+        message_id = reaction.message.id
+        if message_id in self.reaction_roles:
+            emoji, role = self.reaction_roles[message_id]
+            if str(reaction.emoji) == emoji:
+                guild = reaction.message.guild
+                member = guild.get_member(user.id)
+                if member:
+                    await member.remove_roles(role)
+                    await reaction.message.channel.send(
+                        f"{user.mention} foi removido do cargo {role.name}.",
+                        delete_after=5
+                    )
 
 async def setup(bot):
     await bot.add_cog(ReactionRole(bot))

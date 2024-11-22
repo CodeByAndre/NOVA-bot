@@ -6,3 +6,4 @@ yt-dlp[default] --pre
 deep-translator
 easy-pil
 pynacl
+aiohttp

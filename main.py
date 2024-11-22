@@ -33,7 +33,10 @@ async def on_member_join(member):
     try:
         background = Editor("pic2.jpg")
         
-        profile_image = await load_image_async(str(member.avatar.url))
+        # Use member's custom avatar if available, otherwise use default avatar
+        avatar_url = member.avatar.url if member.avatar else member.default_avatar.url
+
+        profile_image = await load_image_async(str(avatar_url))
         profile = Editor(profile_image).resize((150, 150)).circle_image()
 
         poppins = Font.poppins(size=50, variant="bold")
