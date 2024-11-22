@@ -5,7 +5,6 @@ from itertools import cycle
 import json
 import os
 import asyncio
-from easy_pil import Editor, load_image_async, Font
 from dotenv import load_dotenv
 
 load_dotenv()
