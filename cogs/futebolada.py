@@ -122,7 +122,6 @@ class Futebolada(commands.Cog):
         await ctx.send(embed=embed)
 
     def balance_teams(self, players):
-        # Divide players by skill levels
         good_players = [p for p, skill in players.items() if skill == "bom"]
         medium_players = [p for p, skill in players.items() if skill == "medio"]
         bad_players = [p for p, skill in players.items() if skill == "mau"]
@@ -133,7 +132,6 @@ class Futebolada(commands.Cog):
 
         team_1, team_2 = [], []
 
-        # Helper function to distribute players evenly
         def distribute_evenly(team_1, team_2, player_list):
             for i, player in enumerate(player_list):
                 if len(team_1) <= len(team_2):
@@ -141,12 +139,10 @@ class Futebolada(commands.Cog):
                 else:
                     team_2.append(player)
 
-        # Distribute players by skill level
         distribute_evenly(team_1, team_2, good_players)
         distribute_evenly(team_1, team_2, medium_players)
         distribute_evenly(team_1, team_2, bad_players)
 
-        # Ensure team sizes are balanced
         while abs(len(team_1) - len(team_2)) > 1:
             if len(team_1) > len(team_2):
                 team_2.append(team_1.pop())
